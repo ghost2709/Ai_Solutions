@@ -1,0 +1,441 @@
+{% extends "base.html" %}
+{% block title %}Analytics Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+  <h1 class="text-2xl font-semibold text-gray-800">Analytics Dashboard</h1>
+
+  <!-- Filters -->
+  <form id="filterForm" class="bg-white p-6 rounded-lg shadow-sm space-y-4">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div>
+        <label for="startDate" class="block text-sm font-medium text-gray-600">Start Date</label>
+        <input type="date" id="startDate" name="startDate" class="mt-1 w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+      </div>
+      <div>
+        <label for="endDate" class="block text-sm font-medium text-gray-600">End Date</label>
+        <input type="date" id="endDate" name="endDate" class="mt-1 w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+      </div>
+      <div>
+        <label for="country" class="block text-sm font-medium text-gray-600">Country</label>
+        <input type="text" id="country" name="country" placeholder="e.g., UK" class="mt-1 w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+      </div>
+      <div>
+        <label for="jobType" class="block text-sm font-medium text-gray-600">Job Type</label>
+        <input type="text" id="jobType" name="jobType" placeholder="e.g., AI Model Training" class="mt-1 w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+      </div>
+    </div>
+    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Apply Filters</button>
+  </form>
+
+  <!-- KPIs - Overview -->
+  <div class="bg-white p-6 rounded-lg shadow-sm">
+    <h2 class="text-xl font-semibold text-gray-800">Key Performance Indicators</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
+      <div class="bg-blue-100 p-4 rounded-lg shadow-sm">
+        <h3 class="text-lg font-medium text-gray-700">Total Revenue</h3>
+        <p id="totalRevenue" class="text-xl font-bold text-blue-600">$0.00</p>
+      </div>
+      <div class="bg-green-100 p-4 rounded-lg shadow-sm">
+        <h3 class="text-lg font-medium text-gray-700">Total Jobs</h3>
+        <p id="totalJobs" class="text-xl font-bold text-green-600">0</p>
+      </div>
+      <div class="bg-yellow-100 p-4 rounded-lg shadow-sm">
+        <h3 class="text-lg font-medium text-gray-700">AI Assistant Uses</h3>
+        <p id="aiAssistantUses" class="text-xl font-bold text-yellow-600">0</p>
+      </div>
+      <div class="bg-red-100 p-4 rounded-lg shadow-sm">
+        <h3 class="text-lg font-medium text-gray-700">Demo Requests</h3>
+        <p id="demoRequests" class="text-xl font-bold text-red-600">0</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart Grid Telling a Story -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- Row 2: Customer Distribution (Context) -->
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('countryChart')">
+      <canvas id="countryChart"></canvas>
+    </div>
+
+    <!-- Row 3: Engagement and Behavior -->
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('deviceChart')">
+      <canvas id="deviceChart"></canvas>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('peakHoursChart')">
+      <canvas id="peakHoursChart"></canvas>
+    </div>
+
+    <!-- Row 4: Customer Interest and Actions -->
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('scheduledDemosChart')">
+      <canvas id="scheduledDemosChart"></canvas>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('promoInterestChart')">
+      <canvas id="promoInterestChart"></canvas>
+    </div>
+
+    <!-- Row 5: Product Performance -->
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('topProductsChart')">
+      <canvas id="topProductsChart"></canvas>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('monthlyRevenueChart')">
+      <canvas id="monthlyRevenueChart"></canvas>
+    </div>
+
+    <!-- Row 6: Financial and Conversion Insights -->
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('profitLossChart')">
+      <canvas id="profitLossChart"></canvas>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('conversionChart')">
+      <canvas id="conversionChart"></canvas>
+    </div>
+
+    <!-- Row 7: Effectiveness and Outcomes -->
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('roiChart')">
+      <canvas id="roiChart"></canvas>
+    </div>
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96 cursor-pointer" onclick="openModal('funnelChart')">
+      <canvas id="funnelChart"></canvas>
+    </div>
+
+    <!-- Row 8: Operational Conclusion -->
+    <div class="bg-white p-6 rounded-lg shadow-sm h-96">
+      <img id="jobTypeBar" src="" alt="Job Type Distribution" class="w-full">
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="chartModal" class="fixed inset-0 bg-gray-800 bg-opacity-75 flex items-center justify-center hidden z-50">
+    <div class="bg-white rounded-lg p-6 w-11/12 md:w-3/4 lg:w-1/2 max-h-[90vh] overflow-hidden flex flex-col">
+      <div class="flex justify-between items-center mb-4">
+        <h2 id="modalTitle" class="text-xl font-semibold text-gray-800"></h2>
+        <button onclick="closeModal()" class="text-gray-600 hover:text-gray-800 text-2xl">×</button>
+      </div>
+      <div class="flex-1 max-h-[60vh]">
+        <canvas id="modalChart" class="w-full h-full"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Keep track of charts to destroy them before re-rendering
+let charts = {};
+let modalChart = null;
+
+// Color schemes for each chart
+const colorSchemes = {
+  countryChart: {
+    background: ['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff', '#c7d2fe', '#a5b4fc', '#818cf8', '#6366f1', '#4f46e5'],
+    border: ['#4338ca', '#4f46e5', '#4f46e5', '#4f46e5', '#4f46e5', '#4f46e5', '#4f46e5', '#4f46e5', '#4f46e5', '#4f46e5']
+  },
+  jobTypeChart: {
+    background: ['#10b981', '#34d399', '#6ee7b7', '#a7f3d0', '#d1fae5'],
+    border: ['#047857', '#059669', '#059669', '#059669', '#059669']
+  },
+  topProductsChart: {
+    background: ['#f59e0b', '#fbbf24', '#fcd34d', '#fef08a', '#fefcbf'],
+    border: ['#b45309', '#d97706', '#d97706', '#d97706', '#d97706']
+  },
+  monthlyRevenueChart: {
+    background: '#3b82f6',
+    border: '#1e3a8a'
+  },
+  scheduledDemosChart: {
+    background: ['#ec4899', '#f472b6', '#f9a8d4', '#fce7f3', '#fdf2f8'],
+    border: ['#be185d', '#db2777', '#db2777', '#db2777', '#db2777']
+  },
+  peakHoursChart: {
+    background: ['#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe', '#ede9fe'],
+    border: ['#6d28d9', '#7c3aed', '#7c3aed', '#7c3aed', '#7c3aed']
+  },
+  demoPromoChart: {
+    demo: { background: '#60a5fa', border: '#1e40af' },
+    promo: { background: '#93c5fd', border: '#3b82f6' }
+  },
+  promoInterestChart: {
+    background: ['#14b8a6', '#2dd4bf', '#5eead4', '#99f6e4', '#ccfbf1'],
+    border: ['#0f766e', '#0d9488', '#0d9488', '#0d9488', '#0d9488']
+  },
+  deviceChart: {
+    background: ['#ef4444', '#f87171', '#fca5a5', '#fecaca', '#fee2e2'],
+    border: ['#b91c1c', '#dc2626', '#dc2626', '#dc2626', '#dc2626']
+  },
+  conversionChart: {
+    background: ['#06b6d4', '#22d3ee', '#67e8f9', '#a5f3fc', '#cffafe'],
+    border: ['#0891b2', '#0e7490', '#0e7490', '#0e7490', '#0e7490']
+  },
+  roiChart: {
+    background: ['#d946ef', '#e879f9', '#f0abfc', '#f5d0fe', '#fae8ff'],
+    border: ['#a21caf', '#c026d3', '#c026d3', '#c026d3', '#c026d3']
+  },
+  profitLossChart: {
+    background: '#f97316',
+    border: '#c2410c'
+  },
+  funnelChart: {
+    background: ['#eab308', '#facc15', '#fef9c3'],
+    border: ['#ca8a04', '#eab308', '#eab308']
+  }
+};
+
+// Chart configurations for reuse in modal
+const chartConfigs = {
+  countryChart: { url: '/chart_data/country_distribution', type: 'bar', label: 'Users by Country', datasetKey: 'values', isMultiDataset: false, title: 'Top 10 Countries by User Distribution', xLabel: 'Country', yLabel: 'Number of Users' },
+  jobTypeChart: { url: '/chart_data/job_type_distribution', type: 'doughnut', label: 'Jobs by Type', datasetKey: 'values', isMultiDataset: false, title: 'Distribution of Job Types', xLabel: null, yLabel: null },
+  topProductsChart: { url: '/chart_data/top_products', type: 'bar', label: 'Revenue by Product', datasetKey: 'values', isMultiDataset: false, title: 'Top Products by Revenue Generated', xLabel: 'Product', yLabel: 'Revenue (USD)' },
+  monthlyRevenueChart: { url: '/chart_data/monthly_revenue', type: 'line', label: 'Monthly Revenue', datasetKey: 'values', isMultiDataset: false, title: 'Monthly Revenue Trends', xLabel: 'Month', yLabel: 'Revenue (USD)' },
+  scheduledDemosChart: { url: '/chart_data/scheduled_demos', type: 'pie', label: 'Demo Requests', datasetKey: 'values', isMultiDataset: false, title: 'Demo Requests by Product Category', xLabel: null, yLabel: null },
+  peakHoursChart: { url: '/chart_data/peak_hours', type: 'bar', label: 'Requests by Hour', datasetKey: 'values', isMultiDataset: false, title: 'Request Distribution by Hour of Day', xLabel: 'Hour of Day', yLabel: 'Number of Requests' },
+  demoPromoChart: { url: '/chart_data/demo_promo_requests', type: 'line', label: 'Demo and Promo Requests', datasetKey: null, isMultiDataset: true, title: 'Demo and Promotional Requests Over Time', xLabel: 'Month', yLabel: 'Request Count' },
+  promoInterestChart: { url: '/chart_data/promo_interest', type: 'pie', label: 'Promo Interest', datasetKey: 'values', isMultiDataset: false, title: 'Interest in Promotional Events', xLabel: null, yLabel: null },
+  deviceChart: { url: '/chart_data/device_distribution', type: 'doughnut', label: 'Interactions by Device', datasetKey: 'values', isMultiDataset: false, title: 'Device Type Distribution', xLabel: null, yLabel: null },
+  conversionChart: { url: '/chart_data/conversion_by_product', type: 'bar', label: 'Conversion Rate', datasetKey: 'values', isMultiDataset: false, title: 'Conversion Rates by Product', xLabel: 'Product', yLabel: 'Conversion Rate (%)' },
+  roiChart: { url: '/chart_data/roi_by_product', type: 'bar', label: 'ROI', datasetKey: 'values', isMultiDataset: false, title: 'Return on Investment by Product', xLabel: 'Product', yLabel: 'ROI (%)' },
+  profitLossChart: { url: '/chart_data/profit_loss_over_time', type: 'line', label: 'Profit/Loss', datasetKey: 'values', isMultiDataset: false, title: 'Profit and Loss Trends Over Time', xLabel: 'Month', yLabel: 'Profit/Loss (USD)' },
+  funnelChart: { url: '/chart_data/conversion_funnel', type: 'funnel', label: 'Conversion Funnel', datasetKey: 'values', isMultiDataset: false, title: 'Customer Conversion Funnel', xLabel: 'Stage', yLabel: 'Number of Users' }
+};
+
+// Fetch and draw a single chart
+const fetchAndDraw = (url, chartId, chartType, label, datasetKey = 'values', isMultiDataset = false, title, xLabel, yLabel, isModal = false) => {
+  const canvas = document.getElementById(isModal ? 'modalChart' : chartId);
+  if (!canvas) {
+    console.error(`Canvas element with ID ${isModal ? 'modalChart' : chartId} not found in the DOM`);
+    return;
+  }
+
+  fetch(url)
+    .then(res => res.json())
+    .then(data => {
+      const ctx = canvas.getContext('2d');
+
+      // For countryChart, sort and slice to top 10 countries
+      if (chartId === 'countryChart') {
+        const paired = data.labels.map((label, i) => ({ label, value: data.values[i] }));
+        paired.sort((a, b) => b.value - a.value);
+        data.labels = paired.slice(0, 10).map(item => item.label);
+        data.values = paired.slice(0, 10).map(item => item.value);
+      }
+
+      // Destroy existing chart if it exists
+      if (isModal && modalChart) {
+        modalChart.destroy();
+      } else if (!isModal && charts[chartId]) {
+        charts[chartId].destroy();
+      }
+
+      // Prepare datasets
+      let datasets = [];
+      if (isMultiDataset) {
+        datasets = [
+          {
+            label: 'Demo Requests',
+            data: data.demos,
+            backgroundColor: colorSchemes[chartId].demo.background,
+            borderColor: colorSchemes[chartId].demo.border,
+            borderWidth: 1,
+            fill: chartType === 'line',
+            tension: 0.3
+          },
+          {
+            label: 'Promo Interest',
+            data: data.promos,
+            backgroundColor: colorSchemes[chartId].promo.background,
+            borderColor: colorSchemes[chartId].promo.border,
+            borderWidth: 1,
+            fill: chartType === 'line',
+            tension: 0.3
+          }
+        ];
+      } else {
+        datasets = [{
+          label: label,
+          data: data[datasetKey],
+          backgroundColor: colorSchemes[chartId].background,
+          borderColor: colorSchemes[chartId].border,
+          borderWidth: 1,
+          fill: chartType === 'line',
+          tension: chartType === 'line' ? 0.3 : undefined,
+          barPercentage: chartId === 'funnelChart' ? [1.0, 0.8, 0.6] : undefined
+        }];
+      }
+
+      // Create new chart
+      const newChart = new Chart(ctx, {
+        type: chartType === 'funnel' ? 'bar' : chartType,
+        data: {
+          labels: data.labels,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            title: {
+              display: true,
+              text: title,
+              font: { size: isModal ? 24 : 18, family: 'Inter', weight: 'bold' },
+              color: '#1f2937',
+              padding: { top: 10, bottom: 20 }
+            },
+            legend: {
+              display: chartType === 'pie' || chartType === 'doughnut' || isMultiDataset || chartType === 'line',
+              position: (chartType === 'pie' || chartType === 'doughnut') ? 'right' : 'top',
+              labels: {
+                font: { size: isModal ? 14 : 12, family: 'Inter' },
+                color: '#4b5563',
+                padding: 15,
+                boxWidth: 20
+              }
+            },
+            tooltip: {
+              enabled: true,
+              backgroundColor: '#1f2937',
+              titleFont: { size: isModal ? 14 : 12, family: 'Inter' },
+              bodyFont: { size: isModal ? 14 : 12, family: 'Inter' },
+              padding: 12,
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  let value = context.parsed.y || context.parsed;
+                  // Convert value to number if possible
+                  const numericValue = parseFloat(value);
+                  if (label.includes('Revenue') || label.includes('Profit/Loss')) {
+                    return isNaN(numericValue) ? `${label}: N/A` : `${label}: $${numericValue.toFixed(2)}`;
+                  } else if (label.includes('Conversion') || label.includes('ROI')) {
+                    return isNaN(numericValue) ? `${label}: N/A` : `${label}: ${numericValue.toFixed(2)}%`;
+                  } else {
+                    return `${label}: ${value}`; // Display raw value for non-numeric or count-based charts
+                  }
+                }
+              }
+            }
+          },
+          scales: chartType !== 'pie' && chartType !== 'doughnut' ? {
+            x: {
+              display: true,
+              title: {
+                display: !!xLabel,
+                text: xLabel || '',
+                font: { size: isModal ? 16 : 14, family: 'Inter', weight: 'bold' },
+                color: '#1f2937',
+                padding: { top: 10 }
+              },
+              ticks: { color: '#4b5563', font: { size: isModal ? 14 : 12, family: 'Inter' }, maxRotation: 45, minRotation: 45 },
+              grid: { display: false }
+            },
+            y: {
+              display: true,
+              title: {
+                display: !!yLabel,
+                text: yLabel || '',
+                font: { size: isModal ? 16 : 14, family: 'Inter', weight: 'bold' },
+                color: '#1f2937',
+                padding: { bottom: 10 }
+              },
+              ticks: { color: '#4b5563', font: { size: isModal ? 14 : 12, family: 'Inter' } },
+              grid: { color: '#e5e7eb', lineWidth: 1 }
+            }
+          } : {},
+          indexAxis: chartType === 'bar' && (chartId === 'conversionChart' || chartId === 'roiChart' || chartId === 'topProductsChart') ? 'y' : 'x'
+        }
+      });
+
+      if (isModal) {
+        modalChart = newChart;
+      } else {
+        charts[chartId] = newChart;
+      }
+    })
+    .catch(error => console.error(`Error fetching data for ${chartId}:`, error));
+};
+
+// Load Job Type Bar Image
+const loadJobTypeBar = (params = '') => {
+  fetch(`/chart/job_type_bar${params}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('jobTypeBar').src = `data:image/png;base64,${data.image}`;
+    })
+    .catch(error => console.error('Error fetching job type bar:', error));
+};
+
+// Load KPIs
+const loadKPIs = (params = '') => {
+  fetch(`/kpi/total_revenue${params}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('totalRevenue').textContent = `$${data.total_revenue.toFixed(2)}`;
+    })
+    .catch(error => console.error('Error fetching total revenue:', error));
+
+  fetch(`/dashboard-overview-data${params}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('totalJobs').textContent = data.total_jobs;
+      document.getElementById('demoRequests').textContent = data.demo_requests;
+      document.getElementById('aiAssistantUses').textContent = data.ai_assistant_uses;
+    })
+    .catch(error => console.error('Error fetching dashboard overview:', error));
+};
+
+// Modal functions
+const openModal = (chartId) => {
+  const modal = document.getElementById('chartModal');
+  const modalTitle = document.getElementById('modalTitle');
+  const config = chartConfigs[chartId];
+
+  if (config) {
+    modalTitle.textContent = config.title;
+    modal.classList.remove('hidden');
+    fetchAndDraw(
+      config.url,
+      chartId,
+      config.type,
+      config.label,
+      config.datasetKey,
+      config.isMultiDataset,
+      config.title,
+      config.xLabel,
+      config.yLabel,
+      true
+    );
+  }
+};
+
+const closeModal = () => {
+  const modal = document.getElementById('chartModal');
+  modal.classList.add('hidden');
+  if (modalChart) {
+    modalChart.destroy();
+    modalChart = null;
+  }
+};
+
+// Load all charts, job type bar, and KPIs
+const loadAllCharts = (params = '') => {
+  Object.keys(chartConfigs).forEach(chartId => {
+    const config = chartConfigs[chartId];
+    fetchAndDraw(
+      `${config.url}${params}`,
+      chartId,
+      config.type,
+      config.label,
+      config.datasetKey,
+      config.isMultiDataset,
+      config.title,
+      config.xLabel,
+      config.yLabel
+    );
+  });
+  loadJobTypeBar(params);
+  loadKPIs(params);
+};
+
+// Load charts after DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+  loadAllCharts();
+});
+</script>
+{% endblock %}
